@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mathcounts: Battle Royale</title>
+  </head>
+  <body>
+    <h1>Mathcounts: Battle Royale</h1>
+    <p id='health'>Not yet in a battle...</p>
+    <p id='playerCount'>Player count loading...</p>
+    <p id='gameBeginning'>The game has not yet begun. Waiting for players...</p>
+    <p id='question'></p>
+    <p id='result'></p>
+    <input type='text' id='answer' disabled='true'></input>
+    <button id='joinRoomButton' onclick='joinRoom()'>Join Game</button>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script>
+  var gameInProgress = false;
+  var inCurrentGame = false;
+  var socket = io();
+  var id = -1;
+  socket.on('takeThisId', function(idGiven) {
+    if (id === -1) id = idGiven;
+  });
+  socket.on('updatePlayerCount', function(numOnline, numInRoom, gameGoingOn) {
+      document.getElementById('playerCount').innerHTML = "There are currently " + numOnline + " player(s) online.<br>There are " + numInRoom + " in the room.";
+    gameInProgress = gameGoingOn;
+    if (gameInProgress && !inCurrentGame) {
+    document.getElementById('gameBeginning').innerHTML = "A game is already in progress. You'll be spectating.";
+    }
+  });
+  socket.on('gameBeginning', function(num) {
+    inCurrentGame = true;
+    document.getElementById('joinRoomButton').disabled = true;
+    document.getElementById('gameBeginning').innerHTML = num + "/3 players in room. Starting game..."
+  });
+  socket.on ('question', function(num, text) {
+    if (!inCurrentGame) return;
+    document.getElementById('question').innerHTML = num + ". " + text;
+    document.getElementById('answer').value = '';
+    document.getElementById('answer').disabled = false;
+    document.getElementById('result').innerHTML = '';
+  });
+  socket.on('endQuestion', function(answer) {
+    if (!inCurrentGame) return;
+    document.getElementById('answer').disabled = true;
+    if (document.getElementById('answer').value == answer) {
+      socket.emit('gotCorrect', id);
+      document.getElementById('result').innerHTML = "Correct answer obtained! Expanding brain!";
+    } else {
+      socket.emit('gotIncorrect', id);
+      document.getElementById('result').innerHTML = "You're a failure!";
+    }
+  });
+  socket.on('healthsAre', function(healthArray) {
+    document.getElementById('health').innerHTML = "Health: " + healthArray[id];
+  });
+  socket.on('die', function(dedID) {
+    if (id == dedID) {
+      document.getElementById('result').innerHTML = "You're ded!";
+      document.getElementById('health').innerHTML = "Health: DED";
+      inCurrentGame = false;
+      document.getElementById('joinRoomButton').disabled = true;
+    }
+  });
+  socket.on('winner', function(winner) {
+    gameInProgress = false;
+    inCurrentGame = false;
+    if (id === winner) {
+      document.getElementById('result').innerHTML = "You won a Mathcounts: Victory Royale!";
+    } else {
+      document.getElementById('result').innerHTML = "Someone else won :(";
+    }
+    document.getElementById('health').innerHTML = "Battle ended. Waiting for another one...";
+    document.getElementById('gameBeginning').innerHTML = "The game has not yet begun. Waiting for players...";
+    document.getElementById('question').innerHTML = "";
+  });
+  function joinRoom() {
+     socket.emit('joinRoom', id);
+  }
+    </script>
+  </body>
+</html>
