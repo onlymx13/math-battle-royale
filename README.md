@@ -2,7 +2,7 @@
 A battle royale game, written in Node.js. Still in extreme WIP format.
 
 ## Running
-Use instructions from [nodejs.org] to install Node.js on your computer. This is not a tutorial for how to do that because plenty of those exist already.
+Use instructions from [https://nodejs.org] to install Node.js on your computer. This is not a tutorial for how to do that because plenty of those exist already.
 After installing Node.js, use `./math_battle_royale.sh` to run. This script will run the code locally on your network, and only others on your network will be able to join your room.
 
 ## To collaborators
