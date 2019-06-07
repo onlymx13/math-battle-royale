@@ -4,6 +4,7 @@ const io = require('socket.io')(http);
 const port = process.env.PORT || 3000;
 const fs = require('fs');
 
+var serverNumber = Math.random();
 var allClients = [];
 var inRoomArray = [];
 var ids = [];
@@ -46,7 +47,7 @@ io.on('connection', function(socket){
     healthArray.push(0); // if a game is already going on, don't pollute the health
   }
   ids.push(nextId);
-  io.emit('takeThisId', nextId++);
+  io.emit('takeThisId', nextId++, serverNumber);
   io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress);
   console.log("A user has joined.");
   socket.on('gotCorrect', function(id) {
@@ -108,6 +109,17 @@ function calculateHealths() {
     io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress);
     questionCount = 1;
     io.emit('winner', winner);
+    healthArray = healthArray.map(x => 2);
+  } else if (num === 0) {
+    clearInterval(questionInterval);
+    console.log("Everybody lost!")
+    gameInProgress = false;
+    inRoomArray = inRoomArray.map(function() {
+      return 0;
+    });
+    io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress);
+    questionCount = 1;
+    io.emit('winner', 'nobody');
     healthArray = healthArray.map(x => 2);
   }
 

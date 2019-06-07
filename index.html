@@ -1,16 +1,34 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Mathcounts: Battle Royale</title>
+    <title>Math: Battle Royale</title>
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+  <style>
+    div#timer-wrapper {
+      position: relative;
+    }
+    strong#timer {
+      font-size: 40px;
+      color:red;
+      position:absolute;
+      top: 0px;
+      right: 0px;
+      font-family: 'Ubuntu', sans-serif;
+    }
+  </style>
   </head>
   <body>
-    <h1>Mathcounts: Battle Royale</h1>
+    <div id='timer-wrapper'>
+      <strong id='timer'></strong>
+    </div>
+    <h1>Math: Battle Royale</h1>
     <p id='health'>Not yet in a battle...</p>
     <p id='playerCount'>Player count loading...</p>
     <p id='gameBeginning'>The game has not yet begun. Waiting for players...</p>
     <p id='question'></p>
     <p id='result'></p>
     <input type='text' id='answer' disabled='true'></input>
+    <br>
     <button id='joinRoomButton' onclick='joinRoom()'>Join Game</button>
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script>
@@ -18,14 +36,23 @@
   var inCurrentGame = false;
   var socket = io();
   var id = -1;
-  socket.on('takeThisId', function(idGiven) {
+  var questionInterval;
+  var serverNumber;
+
+  socket.on('takeThisId', function(idGiven, num) {
     if (id === -1) id = idGiven;
+    if (!serverNumber) {
+      serverNumber = num;
+    } else if (serverNumber !== num) {
+      alert("The server has been restarted or updated. Please close this dialog and then refresh your page now."); // People who don't follow this might create duplicate people. Maybe the server should autoremove people who are inactive for a long amount of time?
+    }
   });
   socket.on('updatePlayerCount', function(numOnline, numInRoom, gameGoingOn) {
       document.getElementById('playerCount').innerHTML = "There are currently " + numOnline + " player(s) online.<br>There are " + numInRoom + " in the room.";
     gameInProgress = gameGoingOn;
     if (gameInProgress && !inCurrentGame) {
     document.getElementById('gameBeginning').innerHTML = "A game is already in progress. You'll be spectating.";
+    document.getElementById('joinRoomButton').disabled = true;
     }
   });
   socket.on('gameBeginning', function(num) {
@@ -39,6 +66,11 @@
     document.getElementById('answer').value = '';
     document.getElementById('answer').disabled = false;
     document.getElementById('result').innerHTML = '';
+    if (questionInterval) clearInterval(questionInterval);
+    document.getElementById('timer').innerHTML = 15;
+    questionInterval = setInterval(function () {
+      document.getElementById('timer').innerHTML --;
+    }, 1000);
   });
   socket.on('endQuestion', function(answer) {
     if (!inCurrentGame) return;
@@ -49,6 +81,11 @@
     } else {
       socket.emit('gotIncorrect', id);
       document.getElementById('result').innerHTML = "You're a failure!";
+      document.getElementById('timer').innerHTML = 5;
+      if (questionInterval) clearInterval(questionInterval);
+      questionInterval = setInterval(function () {
+        document.getElementById('timer').innerHTML--;
+      }, 1000);
     }
   });
   socket.on('healthsAre', function(healthArray) {
@@ -65,14 +102,20 @@
   socket.on('winner', function(winner) {
     gameInProgress = false;
     inCurrentGame = false;
-    if (id === winner) {
-      document.getElementById('result').innerHTML = "You won a Mathcounts: Victory Royale!";
-    } else {
-      document.getElementById('result').innerHTML = "Someone else won :(";
-    }
+    clearInterval(questionInterval);
     document.getElementById('health').innerHTML = "Battle ended. Waiting for another one...";
     document.getElementById('gameBeginning').innerHTML = "The game has not yet begun. Waiting for players...";
     document.getElementById('question').innerHTML = "";
+    document.getElementById('joinRoomButton').disabled = false;
+    if (winner === 'nobody') {
+      document.getElementById('result').innerHTML = "It's a tie! Multiple people lost at the same time!";
+    } else {
+      if (id === winner) {
+        document.getElementById('result').innerHTML = "You won a Math: Victory Royale!";
+      } else {
+        document.getElementById('result').innerHTML = "Someone else won :(";
+      }
+    }
   });
   function joinRoom() {
      socket.emit('joinRoom', id);
