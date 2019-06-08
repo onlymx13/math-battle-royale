@@ -79,17 +79,17 @@
   socket.on('endQuestion', function(answer) {
     if (!inCurrentGame) return;
     document.getElementById('answer').disabled = true;
+      document.getElementById('timer').innerHTML = 5;
+      if (questionInterval) clearInterval(questionInterval);
+      questionInterval = setInterval(function () {
+        document.getElementById('timer').innerHTML--;
+      }, 1000);
     if (document.getElementById('answer').value == answer) {
       socket.emit('gotCorrect', id);
       document.getElementById('result').innerHTML = "Correct answer obtained! Expanding brain!";
     } else {
       socket.emit('gotIncorrect', id);
       document.getElementById('result').innerHTML = "You're a failure!";
-      document.getElementById('timer').innerHTML = 5;
-      if (questionInterval) clearInterval(questionInterval);
-      questionInterval = setInterval(function () {
-        document.getElementById('timer').innerHTML--;
-      }, 1000);
     }
   });
   socket.on('healthsAre', function(healthArray) {
