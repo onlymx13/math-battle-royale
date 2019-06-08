@@ -58,11 +58,14 @@
     }
   });
   socket.on('gameBeginning', function(num) {
-    if (joinedRoom) {
-      inCurrentGame = true;
-      document.getElementById('joinRoomButton').disabled = true;
-      document.getElementById('gameBeginning').innerHTML = num + "/3 players in room. Starting game..."
-    }
+    gameInProgress = true;
+    document.getElementById('joinRoomButton').disabled = true;
+  if (joinedRoom) {
+    inCurrentGame = true;
+    document.getElementById('gameBeginning').innerHTML = num + "/3 players in room. Starting game...";
+  } else {
+    document.getElementById('gameBeginning').innerHTML = num + "/3 players in room. Starting game. You'll be spectating.";
+  }
   });
   socket.on ('question', function(num, text) {
     if (!inCurrentGame) return;

@@ -4,6 +4,8 @@ const io = require('socket.io')(http);
 const port = process.env.PORT || 3000;
 const fs = require('fs');
 
+const healthPerPlayer = 2; // The number of health each player starts the game with.
+
 var serverNumber = Math.random();
 var allClients = [];
 var inRoomArray = [];
@@ -15,6 +17,7 @@ var healthArray = [];
 var questions;
 var currQuestion;
 var questionInterval;
+var endQuestionTimeout;
 
 fs.readFile('questions', function(err, data) {
   if (err) throw err;
@@ -41,11 +44,11 @@ app.get('/', function(req, res){
 io.on('connection', function(socket){
   allClients.push(socket);  
   inRoomArray.push(0);
-  if (!gameInProgress) {
-    healthArray.push(2);
-  } else {
+  //if (!gameInProgress) {
+   // healthArray.push(2);
+ // } else {
     healthArray.push(0); // if a game is already going on, don't pollute the health
-  }
+  //}
   ids.push(nextId);
   io.emit('takeThisId', nextId++, serverNumber);
   io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress);
@@ -69,14 +72,20 @@ io.on('connection', function(socket){
 
   });
   socket.on('joinRoom', function(id) {
+    if (!gameInProgress) {
     console.log("Player " + id + " joined the room.");
+    healthArray[ids.indexOf(id)] = healthPerPlayer;
     inRoomArray[ids.indexOf(id)] = 1;
     io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress); 
     if (sumArray(inRoomArray) >= 3 && !gameInProgress) {
+    console.log("Game beginning!");
     gameInProgress = true;
     io.emit('gameBeginning', sumArray(inRoomArray));
     askQuestion();
+    if (questionInterval)
+      clearInterval(questionInterval);
     questionInterval = setInterval(askQuestion,20000);
+    }
     }
   });
 });
@@ -101,26 +110,25 @@ function calculateHealths() {
   });
   if (num === 1) {
     clearInterval(questionInterval);
+    clearTimeout(endQuestionTimeout);
     console.log(winner + " won!");
     gameInProgress = false;
-    inRoomArray = inRoomArray.map(function() {
-      return 0;
-    });
+    inRoomArray = inRoomArray.map(x => 0);
     io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress);
     questionCount = 1;
     io.emit('winner', winner);
-    healthArray = healthArray.map(x => 2);
+    healthArray = healthArray.map(x => 0);
+    if (questionInterval) clearInterval(questionInterval);
   } else if (num === 0) {
     clearInterval(questionInterval);
+    clearTimeout(endQuestionTimeout);
     console.log("Everybody lost!")
     gameInProgress = false;
-    inRoomArray = inRoomArray.map(function() {
-      return 0;
-    });
+    inRoomArray = inRoomArray.map(x => 0);
     io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress);
     questionCount = 1;
     io.emit('winner', 'nobody');
-    healthArray = healthArray.map(x => 2);
+    healthArray = healthArray.map(x => 0);
   }
 
   io.emit('healthsAre', list);
@@ -129,7 +137,8 @@ function askQuestion() {
   calculateHealths();
   currQuestion = randomQuestionNumber();
   io.emit('question', questionCount++, questions[currQuestion]);
-  setTimeout(endQuestion,15000);
+  if (endQuestionTimeout) clearTimeout(endQuestionTimeout);
+  endQuestionTimeout = setTimeout(endQuestion,15000);
 }
 
 function endQuestion() {
@@ -144,5 +153,5 @@ function sumArray(array) {
 }
 
 http.listen(port, function(){
-  console.log('listening on *:' + port);
+  //console.log('listening on *:' + port);
 });
