@@ -74,7 +74,7 @@ io.on('connection', function(socket){
     io.emit('updatePlayerCount', allClients.length, sumArray(inRoomArray), gameInProgress); 
     if (sumArray(inRoomArray) >= 3 && !gameInProgress) {
     gameInProgress = true;
-    io.emit('gameBeginning', allClients.length);
+    io.emit('gameBeginning', sumArray(inRoomArray));
     askQuestion();
     questionInterval = setInterval(askQuestion,20000);
     }

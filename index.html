@@ -38,6 +38,7 @@
   var id = -1;
   var questionInterval;
   var serverNumber;
+  var joinedRoom = false;
 
   socket.on('takeThisId', function(idGiven, num) {
     if (id === -1) id = idGiven;
@@ -53,12 +54,15 @@
     if (gameInProgress && !inCurrentGame) {
     document.getElementById('gameBeginning').innerHTML = "A game is already in progress. You'll be spectating.";
     document.getElementById('joinRoomButton').disabled = true;
+    joinedRoom = false; 
     }
   });
   socket.on('gameBeginning', function(num) {
-    inCurrentGame = true;
-    document.getElementById('joinRoomButton').disabled = true;
-    document.getElementById('gameBeginning').innerHTML = num + "/3 players in room. Starting game..."
+    if (joinedRoom) {
+      inCurrentGame = true;
+      document.getElementById('joinRoomButton').disabled = true;
+      document.getElementById('gameBeginning').innerHTML = num + "/3 players in room. Starting game..."
+    }
   });
   socket.on ('question', function(num, text) {
     if (!inCurrentGame) return;
@@ -97,16 +101,19 @@
       document.getElementById('health').innerHTML = "Health: DED";
       inCurrentGame = false;
       document.getElementById('joinRoomButton').disabled = true;
+      joinedRoom = false;
     }
   });
   socket.on('winner', function(winner) {
     gameInProgress = false;
     inCurrentGame = false;
     clearInterval(questionInterval);
+    document.getElementById('timer').innerHTML = "";
     document.getElementById('health').innerHTML = "Battle ended. Waiting for another one...";
     document.getElementById('gameBeginning').innerHTML = "The game has not yet begun. Waiting for players...";
     document.getElementById('question').innerHTML = "";
     document.getElementById('joinRoomButton').disabled = false;
+    joinedRoom = false;
     if (winner === 'nobody') {
       document.getElementById('result').innerHTML = "It's a tie! Multiple people lost at the same time!";
     } else {
@@ -118,7 +125,12 @@
     }
   });
   function joinRoom() {
-     socket.emit('joinRoom', id);
+     if (!gameInProgress) {
+       joinedRoom = true;
+       socket.emit('joinRoom', id);
+     } else {
+       document.getElementById('gameBeginning').innerHTML = "You can't join the room because you're spectating.";
+     }
   }
     </script>
   </body>
