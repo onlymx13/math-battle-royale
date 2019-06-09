@@ -19,7 +19,7 @@ var currQuestion;
 var questionInterval;
 var endQuestionTimeout;
 
-fs.readFile('questions', function(err, data) {
+fs.readFile('questions.txt', function(err, data) {
   if (err) throw err;
   questions = data.toString().split('\n');
   questions.pop();

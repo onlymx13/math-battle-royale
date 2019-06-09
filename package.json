@@ -1,10 +1,12 @@
 {
-  "name": "socket-chat-example",
+  "name": "math-battle-royale",
   "version": "0.0.1",
-  "description": "my first socket.io app",
+  "description": "A battle royale but for MATH.",
+  "repository": "https://github.com/onlymx13/math-battle-royale",
+  "license": "MIT License",
   "dependencies": {
     "express": "^4.17.1",
-    "socket.io": "^1.7.4"
+    "socket.io": "^2.2.0"
   },
   "scripts": {
     "start": "node index.js"
