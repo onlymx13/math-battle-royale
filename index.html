@@ -87,7 +87,7 @@
       questionInterval = setInterval(function () {
         document.getElementById('timer').innerHTML--;
       }, 1000);
-    if (document.getElementById('answer').value == answer) {
+    if (document.getElementById('answer').value.trim() == answer) {
       socket.emit('gotCorrect', id);
       document.getElementById('result').innerHTML = "Correct answer obtained! Expanding brain!";
     } else {
