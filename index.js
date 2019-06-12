@@ -41,7 +41,7 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-io.on('connection', function(socket){
+io.once('connection', function(socket){
   allClients.push(socket);  
   inRoomArray.push(0);
   //if (!gameInProgress) {
